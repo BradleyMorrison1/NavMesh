@@ -6,11 +6,15 @@ using UnityEngine.AI;
 public class Enemy : MonoBehaviour
 {
     public GameObject player;
+    public GameObject model; // game object that represents enemy
+    public ParticleSystem effects; // effects for when enemy reaches player
+    public AudioSource soundEffect; // used for explosion sound when enemy reaches player
     public NavMeshAgent enemyNavMeshAgent;
 
     private Vector3 startPos;
     public float playerDistance;
 
+    private int timesRespawnRun = 0; // changes when respawn function has run
     private State currentState;
 
     enum State
@@ -18,7 +22,8 @@ public class Enemy : MonoBehaviour
         idle, // start position
         chasing, // chasing player
         returning, // transition between chasing and idle
-        caughtPlayer // when agent reaches player
+        caughtPlayer, // when agent reaches player
+        dead
     }
 
     private void Start()
@@ -34,26 +39,43 @@ public class Enemy : MonoBehaviour
         switch(currentState)
         {
             case State.idle:
+                timesRespawnRun = 0;
                 if (playerDistance < 10f) currentState = State.chasing; // Chases player if the distance is less than 10
                 break;
 
             case State.chasing:
                 enemyNavMeshAgent.SetDestination(player.transform.position);
                 if (playerDistance > 15f) currentState = State.returning; // loses player when distance is greater than 15
-                if (playerDistance <= 1.5f) currentState = State.caughtPlayer;
+                if (playerDistance <= 1.6f) currentState = State.caughtPlayer;
                 break;
 
             case State.returning:
-                Debug.Log("LOST PLAYER");
                 enemyNavMeshAgent.SetDestination(startPos);
                 if (playerDistance < 10f) currentState = State.chasing;
                 else if (enemyNavMeshAgent.pathStatus == NavMeshPathStatus.PathComplete) currentState = State.idle;
                 break;
 
             case State.caughtPlayer:
-                Debug.Log("Reached Player");
                 enemyNavMeshAgent.isStopped = true;
+                model.SetActive(false);
+                effects.Play();
+                soundEffect.Play();
+                currentState = State.dead;
+                break;
+
+            case State.dead:
+                Invoke("Respawn", 1.5f); // respawns enemy after about 1.5 seconds
                 break;
         }
+    }
+
+    private void Respawn()
+    {
+        timesRespawnRun++;
+        if (timesRespawnRun > 1) return;
+        gameObject.transform.position = startPos;
+        currentState = State.idle;
+        enemyNavMeshAgent.isStopped = false;
+        model.SetActive(true);
     }
 }
