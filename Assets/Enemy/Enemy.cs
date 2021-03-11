@@ -9,8 +9,7 @@ public class Enemy : MonoBehaviour
     public NavMeshAgent enemyNavMeshAgent;
 
     private Vector3 startPos;
-    private bool startedChase = false; // determines if enemy has started following player
-    private float playerDistance;
+    public float playerDistance;
 
     private State currentState;
 
@@ -18,7 +17,8 @@ public class Enemy : MonoBehaviour
     {
         idle, // start position
         chasing, // chasing player
-        returning // transition between chasing and idle
+        returning, // transition between chasing and idle
+        caughtPlayer // when agent reaches player
     }
 
     private void Start()
@@ -40,7 +40,7 @@ public class Enemy : MonoBehaviour
             case State.chasing:
                 enemyNavMeshAgent.SetDestination(player.transform.position);
                 if (playerDistance > 15f) currentState = State.returning; // loses player when distance is greater than 15
-                if (enemyNavMeshAgent.pathStatus == NavMeshPathStatus.PathComplete) Debug.Log("Reached Player");
+                if (playerDistance <= 1.5f) currentState = State.caughtPlayer;
                 break;
 
             case State.returning:
@@ -50,6 +50,10 @@ public class Enemy : MonoBehaviour
                 else if (enemyNavMeshAgent.pathStatus == NavMeshPathStatus.PathComplete) currentState = State.idle;
                 break;
 
+            case State.caughtPlayer:
+                Debug.Log("Reached Player");
+                enemyNavMeshAgent.isStopped = true;
+                break;
         }
     }
 }
