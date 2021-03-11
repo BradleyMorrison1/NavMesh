@@ -43,6 +43,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private bool m_Jumping;
         private AudioSource m_AudioSource;
 
+        private Vector3 startPos;
+
         // Use this for initialization
         private void Start()
         {
@@ -56,6 +58,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_Jumping = false;
             m_AudioSource = GetComponent<AudioSource>();
 			m_MouseLook.Init(transform , m_Camera.transform);
+
+            startPos = gameObject.transform.position;
         }
 
 
@@ -255,6 +259,17 @@ namespace UnityStandardAssets.Characters.FirstPerson
                 return;
             }
             body.AddForceAtPosition(m_CharacterController.velocity*0.1f, hit.point, ForceMode.Impulse);
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if(other.CompareTag("Killbox"))
+            {
+                Debug.Log("KillBox Triggered");
+                m_CharacterController.enabled = false;
+                gameObject.transform.position = startPos;
+                m_CharacterController.enabled = true;
+            }
         }
     }
 }
